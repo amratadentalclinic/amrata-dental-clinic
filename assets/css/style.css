@@ -65,6 +65,8 @@ body {
 .hero-photo {
   filter: drop-shadow(0 20px 40px rgba(13,148,136,0.15));
   border-radius: 1.5rem;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 /* ===== STATS ===== */
