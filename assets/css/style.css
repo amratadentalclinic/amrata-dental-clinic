@@ -225,3 +225,38 @@ body {
   background: linear-gradient(90deg, var(--primary), var(--accent));
   border-radius: 2px;
 }
+
+/* ===== CONTACT FORM ===== */
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+}
+
+.contact-form input,
+.contact-form textarea {
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.contact-form button[type="submit"] {
+  transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
+}
+
+.contact-form button[type="submit"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.contact-form button[type="submit"]:disabled {
+  cursor: not-allowed;
+}
+
+/* Form success/error slide-in animation */
+#form-success:not(.hidden),
+#form-error:not(.hidden) {
+  animation: formFeedback 0.4s ease-out;
+}
+
+@keyframes formFeedback {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

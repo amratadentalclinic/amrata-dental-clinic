@@ -66,16 +66,14 @@ document.addEventListener('DOMContentLoaded', function () {
     statsObs.observe(statsSection);
   }
 
-  /* ===== GOOGLE REVIEWS ===== */
-  var PLACE_ID = 'ChIJhYFjXUfIbTkRC_9mp__TcTo';
+  /* ===== REVIEWS (Hardcoded) ===== */
   var reviewsContainer = document.getElementById('reviews-container');
-  var ratingBadge = document.getElementById('rating-badge');
   var fallbackReviews = [
-    { author_name: 'Rahul Meena', rating: 5, text: 'Dr. Amrata is an excellent dentist. Got my root canal done here, absolutely painless. The clinic is clean and well-equipped. Highly recommend!', time: '2 months ago', profile_photo_url: '' },
-    { author_name: 'Sneha Gupta', rating: 5, text: 'Best dental clinic in Jagatpura. Dr. Amrata is very patient and explains everything before treatment. My kids love visiting here!', time: '1 month ago', profile_photo_url: '' },
-    { author_name: 'Vikram Singh', rating: 5, text: 'Got my dental implants done by Dr. Amrata. Amazing results! She is very skilled and professional. The staff is friendly too.', time: '3 months ago', profile_photo_url: '' },
-    { author_name: 'Priya Sharma', rating: 4, text: 'Very good experience. Clean clinic, modern equipment. Dr. Amrata took time to explain my treatment plan in detail.', time: '2 weeks ago', profile_photo_url: '' },
-    { author_name: 'Amit Kumar', rating: 5, text: 'I had severe tooth pain and Dr. Amrata handled it with great care. The crown fitting was perfect. Thank you so much!', time: '1 month ago', profile_photo_url: '' }
+    { author_name: 'Rahul Meena', rating: 5, text: 'Dr. Amrata is an excellent dentist. Got my root canal done here, absolutely painless. The clinic is clean and well-equipped. Highly recommend!', time: '2 months ago' },
+    { author_name: 'Sneha Gupta', rating: 5, text: 'Best dental clinic in Jagatpura. Dr. Amrata is very patient and explains everything before treatment. My kids love visiting here!', time: '1 month ago' },
+    { author_name: 'Vikram Singh', rating: 5, text: 'Got my dental implants done by Dr. Amrata. Amazing results! She is very skilled and professional. The staff is friendly too.', time: '3 months ago' },
+    { author_name: 'Priya Sharma', rating: 4, text: 'Very good experience. Clean clinic, modern equipment. Dr. Amrata took time to explain my treatment plan in detail.', time: '2 weeks ago' },
+    { author_name: 'Amit Kumar', rating: 5, text: 'I had severe tooth pain and Dr. Amrata handled it with great care. The crown fitting was perfect. Thank you so much!', time: '1 month ago' }
   ];
 
   function renderStars(rating) {
@@ -118,25 +116,65 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function loadGoogleReviews() {
-    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-      var service = new google.maps.places.PlacesService(document.createElement('div'));
-      service.getDetails({ placeId: PLACE_ID, fields: ['reviews', 'rating', 'user_ratings_total'] }, function (place, status) {
-        if (status === google.maps.places.PlacesServiceStatus.OK && place.reviews && place.reviews.length > 0) {
-          if (ratingBadge && place.rating) {
-            ratingBadge.textContent = place.rating.toFixed(1);
-          }
-          renderReviews(place.reviews.slice(0, 5));
+  renderReviews(fallbackReviews);
+
+  /* ===== CONTACT FORM (Web3Forms) ===== */
+  var contactForm = document.getElementById('contact-form');
+  if (contactForm) {
+    contactForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var submitBtn = document.getElementById('contact-submit');
+      var successMsg = document.getElementById('form-success');
+      var errorMsg = document.getElementById('form-error');
+      var btnText = submitBtn.querySelector('span');
+      var originalText = btnText.textContent;
+
+      // Reset states
+      successMsg.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+
+      // Loading state
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+      btnText.textContent = 'Sending...';
+
+      var formData = new FormData(contactForm);
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: formData
+      })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (data.success) {
+          successMsg.classList.remove('hidden');
+          contactForm.reset();
+          // Re-render lucide icons for the success message
+          if (typeof lucide !== 'undefined') lucide.createIcons();
         } else {
-          renderReviews(fallbackReviews);
+          errorMsg.classList.remove('hidden');
+          if (typeof lucide !== 'undefined') lucide.createIcons();
         }
+      })
+      .catch(function () {
+        errorMsg.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        btnText.textContent = originalText;
       });
-    } else {
-      renderReviews(fallbackReviews);
+    });
+
+    // Set minimum date for date picker to today
+    var dateInput = document.getElementById('contact-date');
+    if (dateInput) {
+      var today = new Date().toISOString().split('T')[0];
+      dateInput.setAttribute('min', today);
     }
   }
-  window.initReviews = loadGoogleReviews;
-  loadGoogleReviews();
 
   /* ===== LIGHTBOX ===== */
   var lightbox = document.getElementById('lightbox');
@@ -176,8 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ===== HIGHLIGHT TODAY'S HOURS ===== */
   var days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-  var today = days[new Date().getDay()];
-  var todayRow = document.getElementById('hours-' + today);
+  var todayDay = days[new Date().getDay()];
+  var todayRow = document.getElementById('hours-' + todayDay);
   if (todayRow) todayRow.classList.add('hours-today');
 
 });
