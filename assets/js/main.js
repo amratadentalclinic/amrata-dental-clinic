@@ -118,20 +118,54 @@ document.addEventListener('DOMContentLoaded', function () {
 
   renderReviews(fallbackReviews);
 
-  /* ===== CONTACT FORM (Web3Forms) ===== */
-  var contactForm = document.getElementById('contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
+
+  /* ===== APPOINTMENT FORM (appointment.html — Web3Forms) ===== */
+  var apptForm = document.getElementById('appointment-form');
+  if (apptForm) {
+    // Character counter for description
+    var descField = document.getElementById('appt-description');
+    var charCount = document.getElementById('appt-char-count');
+    if (descField && charCount) {
+      descField.addEventListener('input', function () {
+        charCount.textContent = descField.value.length;
+      });
+    }
+
+    // "Others" dropdown highlight
+    var reasonSelect = document.getElementById('appt-reason');
+    var descWrapper = document.getElementById('appt-desc-wrapper');
+    var othersHint = document.getElementById('appt-others-hint');
+    if (reasonSelect && descWrapper) {
+      reasonSelect.addEventListener('change', function () {
+        if (reasonSelect.value === 'Others') {
+          descWrapper.classList.add('others-highlight');
+          if (othersHint) othersHint.classList.remove('hidden');
+          if (descField) descField.focus();
+        } else {
+          descWrapper.classList.remove('others-highlight');
+          if (othersHint) othersHint.classList.add('hidden');
+        }
+      });
+    }
+
+    // Set minimum date for appointment date picker
+    var apptDateInput = document.getElementById('appt-date');
+    if (apptDateInput) {
+      var todayISO = new Date().toISOString().split('T')[0];
+      apptDateInput.setAttribute('min', todayISO);
+    }
+
+    // Form submission
+    apptForm.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      var submitBtn = document.getElementById('contact-submit');
-      var successMsg = document.getElementById('form-success');
-      var errorMsg = document.getElementById('form-error');
+      var submitBtn = document.getElementById('appt-submit');
+      var successCard = document.getElementById('appt-success');
+      var errorMsg = document.getElementById('appt-error');
       var btnText = submitBtn.querySelector('span');
       var originalText = btnText.textContent;
 
       // Reset states
-      successMsg.classList.add('hidden');
       errorMsg.classList.add('hidden');
 
       // Loading state
@@ -139,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
       submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
       btnText.textContent = 'Sending...';
 
-      var formData = new FormData(contactForm);
+      var formData = new FormData(apptForm);
 
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
@@ -148,10 +182,12 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (response) { return response.json(); })
       .then(function (data) {
         if (data.success) {
-          successMsg.classList.remove('hidden');
-          contactForm.reset();
-          // Re-render lucide icons for the success message
+          // Hide form, show success card
+          apptForm.classList.add('hidden');
+          successCard.classList.remove('hidden');
           if (typeof lucide !== 'undefined') lucide.createIcons();
+          // Scroll to success message
+          successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
           errorMsg.classList.remove('hidden');
           if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -167,50 +203,45 @@ document.addEventListener('DOMContentLoaded', function () {
         btnText.textContent = originalText;
       });
     });
-
-    // Set minimum date for date picker to today
-    var dateInput = document.getElementById('contact-date');
-    if (dateInput) {
-      var today = new Date().toISOString().split('T')[0];
-      dateInput.setAttribute('min', today);
-    }
   }
 
   /* ===== LIGHTBOX ===== */
   var lightbox = document.getElementById('lightbox');
-  var lightboxImg = document.getElementById('lightbox-img');
-  var galleryItems = document.querySelectorAll('.gallery-item img');
-  var currentIdx = 0;
-  var galleryImages = [];
-  galleryItems.forEach(function (img, i) {
-    galleryImages.push(img.src);
-    img.parentElement.addEventListener('click', function () {
-      currentIdx = i;
-      lightboxImg.src = galleryImages[currentIdx];
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
+  if (lightbox) {
+    var lightboxImg = document.getElementById('lightbox-img');
+    var galleryItems = document.querySelectorAll('.gallery-item img');
+    var currentIdx = 0;
+    var galleryImages = [];
+    galleryItems.forEach(function (img, i) {
+      galleryImages.push(img.src);
+      img.parentElement.addEventListener('click', function () {
+        currentIdx = i;
+        lightboxImg.src = galleryImages[currentIdx];
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
     });
-  });
-  document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
-  lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
-  document.querySelector('.lightbox-prev').addEventListener('click', function () {
-    currentIdx = (currentIdx - 1 + galleryImages.length) % galleryImages.length;
-    lightboxImg.src = galleryImages[currentIdx];
-  });
-  document.querySelector('.lightbox-next').addEventListener('click', function () {
-    currentIdx = (currentIdx + 1) % galleryImages.length;
-    lightboxImg.src = galleryImages[currentIdx];
-  });
-  function closeLightbox() {
-    lightbox.classList.remove('active');
-    document.body.style.overflow = '';
+    document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+    document.querySelector('.lightbox-prev').addEventListener('click', function () {
+      currentIdx = (currentIdx - 1 + galleryImages.length) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentIdx];
+    });
+    document.querySelector('.lightbox-next').addEventListener('click', function () {
+      currentIdx = (currentIdx + 1) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentIdx];
+    });
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function (e) {
+      if (!lightbox.classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') document.querySelector('.lightbox-prev').click();
+      if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
+    });
   }
-  document.addEventListener('keydown', function (e) {
-    if (!lightbox.classList.contains('active')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') document.querySelector('.lightbox-prev').click();
-    if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
-  });
 
   /* ===== HIGHLIGHT TODAY'S HOURS ===== */
   var days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
